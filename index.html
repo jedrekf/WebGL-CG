@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+<script id="vertexShader.GLSL" type="x-shader/x-vertex" >
+// file="index.html"
+
+precision mediump float;
+
+attribute vec2 vertPosition;
+attribute vec3 vertColor;
+
+varying vec3 fragColor;
+
+void main(){
+    fragColor = vertColor;
+    //3-rd arg is Z
+    gl_Position = vec4(vertPosition, 0.0, 1.0); 
+}
+</script>
+
+<script id="fragmentShader.GLSL" type="x-shader/x-fragment" >
+// file="index.html"
+
+//for now it makes everything red
+precision mediump float;
+
+varying vec3 fragColor;
+
+void main(){
+    gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+}
+</script>
+
+        <title></title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    </head>
+    <body>
+        
+    <canvas id="window" width="800" height="600">
+        Your browser is not compatible
+    </canvas>
+    <div>
+        <i>Enjoy</i>
+    </div>
+    <script src="./app.js"></script> 
+    <script>
+        Init();
+    </script>
+    </body>
+</html>
