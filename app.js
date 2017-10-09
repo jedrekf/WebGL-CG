@@ -61,10 +61,10 @@ var Init = function () {
      * create vertex list
      */
     var triangleVertices = 
-    [ // X, Y       R, G, B
-    0.0, 0.5,       1.0, 0.2, 0.0,
-    -0.5, -0.5,     0.2, 1.0, 0.2,
-    0.5, -0.5,       0.1, 0.3, 1.0
+[   // X, Y                R, G, B
+    0.0, 0.5, 0.0,      1.0, 0.2, 0.0,
+    -0.5, -0.5, 0.0,    0.2, 1.0, 0.2,
+    0.5, -0.5, 0.0,     0.1, 0.3, 1.0
     ];
 
     var triangleVertexBufferObject = gl.createBuffer();
@@ -78,10 +78,10 @@ var Init = function () {
     // vertex locations
     gl.vertexAttribPointer(
         positionAttribLocation, //Attr location
-        2, // number of elements per attr
+        3, // number of elements per attr
         gl.FLOAT, // type of elements
         gl.FALSE,
-        5 * Float32Array.BYTES_PER_ELEMENT, //size of an individual vertex (we have here 2d vertices)
+        6 * Float32Array.BYTES_PER_ELEMENT, //size of an individual vertex (we have here 2d vertices)
         0 // offset from beginning of a single vertex to ths attr
     );
 
@@ -91,19 +91,52 @@ var Init = function () {
         3, // number of elements per attr
         gl.FLOAT, // type of elements
         gl.FALSE,
-        5 * Float32Array.BYTES_PER_ELEMENT, //size of an individual vertex (we have here 2d vertices)
-        2 * Float32Array.BYTES_PER_ELEMENT // offset from beginning of a single vertex to ths attr
+        6 * Float32Array.BYTES_PER_ELEMENT, //size of an individual vertex (we have here 2d vertices)
+        3 * Float32Array.BYTES_PER_ELEMENT // offset from beginning of a single vertex to ths attr
     );
 
     gl.enableVertexAttribArray(positionAttribLocation);
     gl.enableVertexAttribArray(colorAttribLocation);
+
+    //indicate to use this program for transformations
+    gl.useProgram(program);
+    
+    /**
+     * Creating Matrices for word, view and projection
+     */
+    var matWorldUniformLocation = gl.getUniformLocation(program, 'mWorld');
+    var matViewUniformLocation = gl.getUniformLocation(program, 'mView');
+    var matProjUniformLocation = gl.getUniformLocation(program, 'mProj');
+
+    var worldMatrix = new Float32Array(16);
+    var viewMatrix = new Float32Array(16);
+    var projMatrix = new Float32Array(16);
+    mat4.identity(worldMatrix);
+    mat4.lookAt(viewMatrix, [0,0,-4], [0,0,0], [0,1,0]);
+    mat4.perspective(projMatrix, glMatrix.toRadian(45),canvas.width/canvas.height, 0.1, 1000.0);
+
+    gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, worldMatrix);
+    gl.uniformMatrix4fv(matViewUniformLocation, gl.FALSE, viewMatrix);
+    gl.uniformMatrix4fv(matProjUniformLocation, gl.FALSE, projMatrix);
     /**
      * Main render loop
      * (Draw triangle for now)
      */
+    var identitymatrix = new Float32Array(16);
+    mat4.identity(identitymatrix);
+    var angle = 0;
+    var loop = function(){
+        angle = performance.now() / 1000 / 6*2*Math.PI;
+        mat4.rotate(worldMatrix, identitymatrix, angle, [0,1,0]);
+        gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, worldMatrix);
+        
+        gl.clearColor(0.75, 0.85, 0.8, 1.0);
+        gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
 
-    gl.useProgram(program);
-    gl.drawArrays(gl.TRIANGLES, 0, 3);
+        requestAnimationFrame(loop);
+    };
+    requestAnimationFrame(loop);
 }
 
 

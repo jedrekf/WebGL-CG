@@ -2,13 +2,18 @@
 
 precision mediump float;
 
-attribute vec2 vertPosition;
+attribute vec3 vertPosition;
 attribute vec3 vertColor;
 
 varying vec3 fragColor;
 
+//matrices world, view and projection
+uniform mat4 mWorld;
+uniform mat4 mView;
+uniform mat4 mProj;
+
 void main(){
     fragColor = vertColor;
-    //3-rd arg is Z
-    gl_Position = vec4(vertPosition, 0.0, 1.0); 
+    // position -> world:rotation in 3D space -> view:camera -> projection:nice points
+    gl_Position = mProj * mView * mWorld * vec4(vertPosition, 1.0); 
 }
