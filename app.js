@@ -61,10 +61,10 @@ var Init = function () {
      * create vertex list
      */
     var triangleVertices = 
-    [ // X, Y
-    0.0, 0.5,
-    -0.5, -0.5,
-    0.5, -0.5
+    [ // X, Y       R, G, B
+    0.0, 0.5,       1.0, 0.2, 0.0,
+    -0.5, -0.5,     0.2, 1.0, 0.2,
+    0.5, -0.5,       0.1, 0.3, 1.0
     ];
 
     var triangleVertexBufferObject = gl.createBuffer();
@@ -73,17 +73,30 @@ var Init = function () {
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(triangleVertices), gl.STATIC_DRAW);
 
     var positionAttribLocation = gl.getAttribLocation(program, 'vertPosition');
+    var colorAttribLocation = gl.getAttribLocation(program, 'vertColor');
+    
+    // vertex locations
     gl.vertexAttribPointer(
         positionAttribLocation, //Attr location
         2, // number of elements per attr
         gl.FLOAT, // type of elements
         gl.FALSE,
-        2 * Float32Array.BYTES_PER_ELEMENT, //size of an individual vertex (we have here 2d vertices)
+        5 * Float32Array.BYTES_PER_ELEMENT, //size of an individual vertex (we have here 2d vertices)
         0 // offset from beginning of a single vertex to ths attr
     );
 
-    gl.enableVertexAttribArray(positionAttribLocation);
+    // color colors
+    gl.vertexAttribPointer(
+        colorAttribLocation, //Attr location
+        3, // number of elements per attr
+        gl.FLOAT, // type of elements
+        gl.FALSE,
+        5 * Float32Array.BYTES_PER_ELEMENT, //size of an individual vertex (we have here 2d vertices)
+        2 * Float32Array.BYTES_PER_ELEMENT // offset from beginning of a single vertex to ths attr
+    );
 
+    gl.enableVertexAttribArray(positionAttribLocation);
+    gl.enableVertexAttribArray(colorAttribLocation);
     /**
      * Main render loop
      * (Draw triangle for now)
