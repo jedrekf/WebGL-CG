@@ -1,44 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-<script id="vertexShader.GLSL" type="x-shader/x-vertex" >
-// file="index.html"
-
-precision mediump float;
-
-attribute vec3 vertPosition;
-attribute vec3 vertColor;
-
-varying vec3 fragColor;
-
-//matrices world, view and projection
-uniform mat4 mWorld;
-uniform mat4 mView;
-uniform mat4 mProj;
-
-void main(){
-    fragColor = vertColor;
-    // position -> world:rotation in 3D space -> view:camera -> projection:nice points
-    gl_Position = mProj * mView * mWorld * vec4(vertPosition, 1.0); 
-}
-</script>
-
-<script id="fragmentShader.GLSL" type="x-shader/x-fragment" >
+<head>
+<script id="fragmentShader.fs.GLSL" type="x-shader/x-fragment" >
 // file="index.html"
 
 //for now it makes everything red
 precision mediump float;
 
-varying vec3 fragColor;
+varying vec2 fragTexCoord;
+uniform sampler2D sampler;
 
 void main(){
-    gl_FragColor = vec4(fragColor, 1.0);
+    gl_FragColor = texture2D(sampler, fragTexCoord);
 }
 </script>
-        <title>WebGL</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-    </head>
+
+    <title>WebGL</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
 
     <body>
         <canvas id="window" width="800" height="600">
@@ -48,9 +28,12 @@ void main(){
             <i>Enjoy</i>
         </div>
         <script src="./gl-matrix.js"></script>
+        <script src="./utils.js"></script>
+        <script src="./generator.js"></script>
+        <script src="./instance.js"></script>
         <script src="./app.js"></script> 
         <script>
-            Init();
+            App.Init();
         </script>
     </body>
 </html>
