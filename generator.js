@@ -2,7 +2,7 @@
 var Generator = {
 
     //should be half a ball
-    getIsland: function(){
+    getIsland: function () {
         var latitudeBands = 30;
         var longitudeBands = 30;
         var radius = 2;
@@ -10,12 +10,12 @@ var Generator = {
         var vertexPositionData = [];
         var normalData = [];
         var textureCoordData = [];
-        for (var latNumber=0; latNumber <= latitudeBands; latNumber++) {
+        for (var latNumber = 0; latNumber <= latitudeBands; latNumber++) {
             var theta = latNumber * Math.PI / latitudeBands;
             var sinTheta = Math.sin(theta);
             var cosTheta = Math.cos(theta);
 
-            for (var longNumber=0; longNumber <= longitudeBands; longNumber++) {
+            for (var longNumber = 0; longNumber <= longitudeBands; longNumber++) {
                 var phi = longNumber * 2 * Math.PI / longitudeBands;
                 var sinPhi = Math.sin(phi);
                 var cosPhi = Math.cos(phi);
@@ -38,8 +38,8 @@ var Generator = {
         }
 
         var indexData = [];
-        for (var latNumber=0; latNumber < latitudeBands; latNumber++) {
-            for (var longNumber=0; longNumber < longitudeBands; longNumber++) {
+        for (var latNumber = 0; latNumber < latitudeBands; latNumber++) {
+            for (var longNumber = 0; longNumber < longitudeBands; longNumber++) {
                 var first = (latNumber * (longitudeBands + 1)) + longNumber;
                 var second = first + longitudeBands + 1;
                 indexData.push(first);
@@ -52,81 +52,83 @@ var Generator = {
             }
         }
 
-        return {vertices: normalData, indices: indexData, normals: normalData}
+        return { vertices: normalData, indices: indexData, normals: normalData }
     },
-    getFromModel: function(model){
+
+    getFromModel: function (model) {
         var palmTreeVertices = model.meshes[0].vertices;
         var palmTreeIndices = [].concat.apply([], model.meshes[0].faces);
 
-        return {vertices: palmTreeVertices, indices: palmTreeIndices};
+        return { vertices: palmTreeVertices, indices: palmTreeIndices };
     },
-    getBox: function(){
+
+    getBox: function () {
         return {
             vertices:
-            [ // X, Y, Z           U, V
+            [ // X, Y, Z
                 // Top
-                -1.0, 1.0, -1.0,   0, 0,
-                -1.0, 1.0, 1.0,    0, 1,
-                1.0, 1.0, 1.0,     1, 1,
-                1.0, 1.0, -1.0,    1, 0,
-        
+                -1.0, 1.0, -1.0, 
+                -1.0, 1.0, 1.0, 
+                1.0, 1.0, 1.0, 
+                1.0, 1.0, -1.0,
+
                 // Left
-                -1.0, 1.0, 1.0,    0, 0,
-                -1.0, -1.0, 1.0,   1, 0,
-                -1.0, -1.0, -1.0,  1, 1,
-                -1.0, 1.0, -1.0,   0, 1,
-        
+                -1.0, 1.0, 1.0, 
+                -1.0, -1.0, 1.0,
+                -1.0, -1.0, -1.0,
+                -1.0, 1.0, -1.0,
+
                 // Right
-                1.0, 1.0, 1.0,    1, 1,
-                1.0, -1.0, 1.0,   0, 1,
-                1.0, -1.0, -1.0,  0, 0,
-                1.0, 1.0, -1.0,   1, 0,
-        
+                1.0, 1.0, 1.0, 
+                1.0, -1.0, 1.0,
+                1.0, -1.0, -1.0,
+                1.0, 1.0, -1.0,
+
                 // Front
-                1.0, 1.0, 1.0,    1, 1,
-                1.0, -1.0, 1.0,    1, 0,
-                -1.0, -1.0, 1.0,    0, 0,
-                -1.0, 1.0, 1.0,    0, 1,
-        
+                1.0, 1.0, 1.0, 
+                1.0, -1.0, 1.0,
+                -1.0, -1.0, 1.0, 
+                -1.0, 1.0, 1.0, 
+
                 // Back
-                1.0, 1.0, -1.0,    0, 0,
-                1.0, -1.0, -1.0,    0, 1,
-                -1.0, -1.0, -1.0,    1, 1,
-                -1.0, 1.0, -1.0,    1, 0,
-        
+                1.0, 1.0, -1.0, 
+                1.0, -1.0, -1.0,
+                -1.0, -1.0, -1.0,
+                -1.0, 1.0, -1.0, 
+
                 // Bottom
-                -1.0, -1.0, -1.0,   1, 1,
-                -1.0, -1.0, 1.0,    1, 0,
-                1.0, -1.0, 1.0,     0, 0,
-                1.0, -1.0, -1.0,    0, 1,
+                -1.0, -1.0, -1.0,
+                -1.0, -1.0, 1.0,
+                1.0, -1.0, 1.0, 
+                1.0, -1.0, -1.0,
             ],
 
             indices:
-                [
-                    // Top
-                    0, 1, 2,
-                    0, 2, 3,
+            [
+                // Top
+                0, 1, 2,
+                0, 2, 3,
 
-                    // Left
-                    5, 4, 6,
-                    6, 4, 7,
+                // Left
+                5, 4, 6,
+                6, 4, 7,
 
-                    // Right
-                    8, 9, 10,
-                    8, 10, 11,
+                // Right
+                8, 9, 10,
+                8, 10, 11,
 
-                    // Front
-                    13, 12, 14,
-                    15, 14, 12,
+                // Front
+                13, 12, 14,
+                15, 14, 12,
 
-                    // Back
-                    16, 17, 18,
-                    16, 18, 19,
+                // Back
+                16, 17, 18,
+                16, 18, 19,
 
-                    // Bottom
-                    21, 20, 22,
-                    22, 20, 23
-                ]
+                // Bottom
+                21, 20, 22,
+                22, 20, 23
+            ]
         };
     }
 }

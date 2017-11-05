@@ -2,53 +2,54 @@
 
 var gl;
 var model;
+var canvas;
 
-var App = new function(){
-    this.Init = function(){
-        loadTextResource('./shaders/box.vs.GLSL', function(vsErr, vsText){
-            if(vsErr){
-                console.log(vsErr);
-            } else{
-                loadTextResource('./shaders/box.fs.GLSL', function(fsErr, fsText){
-                    if(fsErr){
-                        console.log(fsErr);
-                    } else{
-                        loadJSONResource('./models/palm_tree.json', function(modelErr, modelObj){
-                            if(modelErr){
-                                console.error(modelErr);
-                            } else{
-                                loadImage('./textures/crate_side.svg', function(imgErr, img){
-                                    if(imgErr){
-                                        console.error(imgErr);
-                                    } else{
-                                        Run(vsText, fsText, img, modelObj);                                                                        
-                                    }
-                                });
-                                console.log(modelObj);
-                            }
-                        });
-                    }
-                });
-            }
-        });
+var App = new function () {
+
+    var cameraAngleRadians = degToRad(0);
+    var fieldOfViewRadians = degToRad(60);
+    var cameraHeight = 50;
+    var programs = [];
+    var img;
+    /**
+     * {vertices, indices, normals?}
+     */
+    var objects = []; 
+
+    //downloads shit
+    this.Init = function () {
+
+        var shaderPairsCount = 2;
+        var modelsCount = 1;
+        var texturesCount = 1;
+
+        var basicshaderText;
+        Promise.all([loadTextResource('./shaders/basic.vs.GLSL'),
+            loadTextResource('./shaders/basic.fs.GLSL'),
+            loadTextResource('./shaders/box.vs.GLSL'),
+            loadTextResource('./shaders/box.fs.GLSL'),
+            loadJSONResource('./models/palm_tree.json'),
+            loadImage('./textures/crate_side.svg')]).
+            then( data => {
+                var s = shaderPairsCount*2;
+                var shaders = data.slice(0, s);
+                var models = data.slice(s, s + modelsCount);
+                s += modelsCount;
+                var textures = data.slice(s, s + texturesCount);
+
+                Run(shaders, models, textures);
+
+        }).catch(errors => console.error(errors));
     }
 
-    function Run(boxVertexShaderText, boxFragmentShaderText, img,  modelObj) {
-        var canvas = document.getElementById('window')
-        gl = canvas.getContext('webgl');
-        model = modelObj;
 
-        if(!gl){
-            console.log('Falling back on experimental webgl');
-            gl = cavas.getContext('experimental-webgl');
-        }
-
-        if(!gl){
-            alert('wegl init failed.');
-        }
+    function Run (shaders, models, textures) {
+        gl = getWebGl();
+        img = textures[0];
+        model = models[0];
 
         //setting color of paint
-        gl.clearColor(0.75, 0.85, 0.8, 1.0);
+        gl.clearColor(0.529, 0.807, 0.98, 1.0);
         //perform paint 'from?' depth and color buffers
         //depth buffer holds the z value
         //color buffer holds color info
@@ -63,12 +64,79 @@ var App = new function(){
         /**
          * BOX
          */
-        
-        var boxVertexShader = Instance.createShader(gl, gl.VERTEX_SHADER, boxVertexShaderText);
-        var boxFragmentShader = Instance.createShader(gl, gl.FRAGMENT_SHADER, boxFragmentShaderText);
-        var programBox = Instance.createProgram(gl, boxVertexShader, boxFragmentShader);
+        var boxVertexShader = createShader(gl, gl.VERTEX_SHADER, shaders[2]);
+        var boxFragmentShader = createShader(gl, gl.FRAGMENT_SHADER, shaders[3]);
+        var programBox = createProgram(gl, boxVertexShader, boxFragmentShader);
 
-        var box = Generator.getBox();
+        var basicVertexShader = createShader(gl, gl.VERTEX_SHADER, shaders[0]);
+        var basicFragmentShader = createShader(gl, gl.FRAGMENT_SHADER, shaders[1]);
+        var basicProgram = createProgram(gl, basicVertexShader, basicFragmentShader);
+
+        /**
+         * Each program has asssigned it's vertex and fragment shader.
+         * This means that we could have different programs for textured and for single color models
+         */
+        programs.push(basicProgram);
+        programs.push(programBox);
+        
+        /**
+         * Objects array holding our scene objects
+         */
+        objects.push(Generator.getBox());
+        //maybe assign objects to programs in a dictionary
+
+        /**
+         * Main loop
+         */
+        requestAnimationFrame(drawScene);
+    }
+
+    /**
+     * Draws a single frame
+     */
+    function drawScene () {
+        var speed = performance.now() / 1000;
+
+        resizeCanvasToDisplaySize(gl.canvas);
+        gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+        var aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
+        
+        gl.useProgram(programs[0]);
+        
+        /**
+         * Creating Matrices for world, view and projection 
+         * This probably could be used outside of a shader and multiplied on the go
+         * Then pass to shader just results
+         */
+        var matWorldUniformLocation = gl.getUniformLocation(programs[0], 'mWorld');
+        var matViewUniformLocation = gl.getUniformLocation(programs[0], 'mView');
+        var matProjUniformLocation = gl.getUniformLocation(programs[0], 'mProj');
+
+        var worldMatrix = new Float32Array(16);
+        var viewMatrix = new Float32Array(16);
+        var projMatrix = new Float32Array(16);
+
+       
+
+        var eye = [-2, 2, -8]; // where are we
+        var center = [0, 0, 0]; // point we look at
+        var up = [0, 1, 0]; //vec3 pointing up
+
+        mat4.identity(worldMatrix);
+        mat4.lookAt(viewMatrix, eye, center, up);
+        mat4.perspective(projMatrix, degToRad(45), aspect, 0.1, 1000.0);
+
+        //this shit uploads to card??
+        gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, worldMatrix);
+        gl.uniformMatrix4fv(matViewUniformLocation, gl.FALSE, viewMatrix);
+        gl.uniformMatrix4fv(matProjUniformLocation, gl.FALSE, projMatrix);
+
+        // Set buffers
+        var box = objects[0];
+
         var boxVertexBufferObject = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, boxVertexBufferObject);
         // this sends data to GPU
@@ -78,8 +146,8 @@ var App = new function(){
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, boxIndexBufferObject);
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(box.indices), gl.STATIC_DRAW);
 
-        var positionAttribLocation = gl.getAttribLocation(programBox, 'vertPosition');
-        var texCoordAttribLocation = gl.getAttribLocation(programBox, 'vertTexCoord');
+        //each program has it'c vertex and fragment shaders
+        var positionAttribLocation = gl.getAttribLocation(programs[0], 'vertPosition');
 
         // vertex locations
         gl.vertexAttribPointer(
@@ -87,93 +155,16 @@ var App = new function(){
             3, // number of elements per attr
             gl.FLOAT, // type of elements
             gl.FALSE,
-            5 * Float32Array.BYTES_PER_ELEMENT, //size of an individual vertex (we have here 2d vertices)
+            3 * Float32Array.BYTES_PER_ELEMENT, //size of an individual vertex
             0 // offset from beginning of a single vertex to ths attr
         );
+
         // now it's texture
-        gl.vertexAttribPointer(
-            texCoordAttribLocation, //Attr location
-            2, // number of elements per attr
-            gl.FLOAT, // type of elements
-            gl.FALSE,
-            5 * Float32Array.BYTES_PER_ELEMENT, //size of an individual vertex (we have here 2d vertices)
-            3 * Float32Array.BYTES_PER_ELEMENT // offset from beginning of a single vertex to ths attr
-        );
-
         gl.enableVertexAttribArray(positionAttribLocation);
-        gl.enableVertexAttribArray(texCoordAttribLocation);
 
-        /**
-         * Create Texture
-         */
-        var boxTexture = gl.createTexture();
-        gl.bindTexture(gl.TEXTURE_2D, boxTexture);
-        // S and T are coords, thos things are done on a texture but can be changed later
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-        gl.texImage2D(
-            gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA,
-            gl.UNSIGNED_BYTE, 
-            img
-        );
-        gl.bindTexture(gl.TEXTURE_2D, null);
+        gl.drawElements(gl.TRIANGLES, box.indices.length, gl.UNSIGNED_SHORT, 0);
 
-        //indicate to use this program for transformations
-        gl.useProgram(programBox);
-
-        /**
-         * Creating Matrices for world, view and projection
-         */
-        var matWorldUniformLocation = gl.getUniformLocation(programBox, 'mWorld');
-        var matViewUniformLocation = gl.getUniformLocation(programBox, 'mView');
-        var matProjUniformLocation = gl.getUniformLocation(programBox, 'mProj');
-
-        var worldMatrix = new Float32Array(16);
-        var viewMatrix = new Float32Array(16);
-        var projMatrix = new Float32Array(16);
-        mat4.identity(worldMatrix);
-        worldMatrix[12] = 2; // translation 12=x, 13=y, 14=z 
-
-
-
-        mat4.lookAt(viewMatrix, [0,0,-8], [0,0,0], [0,1,0]);
-        mat4.perspective(projMatrix, glMatrix.toRadian(45),canvas.width/canvas.height, 0.1, 1000.0);
-
-        gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, worldMatrix);
-        gl.uniformMatrix4fv(matViewUniformLocation, gl.FALSE, viewMatrix);
-        gl.uniformMatrix4fv(matProjUniformLocation, gl.FALSE, projMatrix);
-
-        var xRotationMatrix = new Float32Array(16);
-        var yRotationMatrix = new Float32Array(16);
-
-
-        /**
-         * Main render loop
-         * (Draw triangle for now)
-         */
-        var identitymatrix = new Float32Array(16);
-        mat4.identity(identitymatrix);
-        var angle = 0;
-        var loop = function(){
-            //angle = performance.now() / 1000 / 6*2*Math.PI;
-            //mat4.rotate(yRotationMatrix, identitymatrix, angle, [0,1,0]);
-            //mat4.rotate(xRotationMatrix, identitymatrix, angle/2, [1,0,0]);
-            //mat4.mul(worldMatrix, xRotationMatrix, yRotationMatrix);
-            gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, worldMatrix);
-
-            gl.clearColor(0.75, 0.85, 0.8, 1.0);
-            gl.clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT);
-
-            gl.bindTexture(gl.TEXTURE_2D, boxTexture);
-            gl.activeTexture(gl.TEXTURE0);
-
-            gl.drawElements(gl.TRIANGLES, box.indices.length, gl.UNSIGNED_SHORT, 0);
-
-            requestAnimationFrame(loop);
-        };
-        requestAnimationFrame(loop);
+        requestAnimationFrame(drawScene);
     }
 
 }
