@@ -3,6 +3,10 @@
 var gl;
 var model;
 var canvas;
+var mouseDown = false;
+var lastMouseX;
+var lastMouseY;
+
 
 var App = new function () {
 
@@ -11,6 +15,10 @@ var App = new function () {
     var cameraHeight = 50;
     var programs = [];
     var img;
+    var eye;
+    var center;
+    var up;
+
     /**
      * {vertices, indices, normals?}
      */
@@ -18,7 +26,6 @@ var App = new function () {
 
     //downloads shit
     this.Init = function () {
-
         var shaderPairsCount = 2;
         var modelsCount = 1;
         var texturesCount = 1;
@@ -82,9 +89,18 @@ var App = new function () {
         /**
          * Objects array holding our scene objects
          */
-        objects.push(Generator.getBox());
+        objects.push(Generator.getFromModel(model));
+        objects.push(Generator.getBox());        
+        objects.push(Generator.getIsland());
         //maybe assign objects to programs in a dictionary
 
+
+        bindEvents();
+        //cam position
+        eye = [0, 10, -8]; // where are we
+        center = [0, 0, 0]; // point we look at
+        up = [0, 1, 0]; //vec3 pointing up
+        
         /**
          * Main loop
          */
@@ -114,37 +130,90 @@ var App = new function () {
         var matWorldUniformLocation = gl.getUniformLocation(programs[0], 'mWorld');
         var matViewUniformLocation = gl.getUniformLocation(programs[0], 'mView');
         var matProjUniformLocation = gl.getUniformLocation(programs[0], 'mProj');
+        var vecColorUniform = gl.getUniformLocation(programs[0], 'vColor');
 
         var worldMatrix = new Float32Array(16);
         var viewMatrix = new Float32Array(16);
         var projMatrix = new Float32Array(16);
-
+        var vecColor = new Float32Array(3);
        
 
-        var eye = [-2, 2, -8]; // where are we
-        var center = [0, 0, 0]; // point we look at
-        var up = [0, 1, 0]; //vec3 pointing up
-
         mat4.identity(worldMatrix);
+        mat4.scale(worldMatrix, worldMatrix, [0.02, 0.02, 0.02]);
+        mat4.translate(worldMatrix, worldMatrix, [150, 0, 0]);
         mat4.lookAt(viewMatrix, eye, center, up);
-        mat4.perspective(projMatrix, degToRad(45), aspect, 0.1, 1000.0);
+        mat4.perspective(projMatrix, degToRad(90), aspect, 0.1, 1000.0);
 
         //this shit uploads to card??
         gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, worldMatrix);
         gl.uniformMatrix4fv(matViewUniformLocation, gl.FALSE, viewMatrix);
         gl.uniformMatrix4fv(matProjUniformLocation, gl.FALSE, projMatrix);
+        
+        vec3.set(vecColor, 0.376, 0.7, 0.117);
+        gl.uniform3fv(vecColorUniform, vecColor);
 
+        /**
+         * Palm
+         */
         // Set buffers
-        var box = objects[0];
+        var obj = objects[0];
 
         var boxVertexBufferObject = gl.createBuffer();
+
         gl.bindBuffer(gl.ARRAY_BUFFER, boxVertexBufferObject);
         // this sends data to GPU
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(box.vertices), gl.STATIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(obj.vertices), gl.STATIC_DRAW);
 
         var boxIndexBufferObject = gl.createBuffer();
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, boxIndexBufferObject);
-        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(box.indices), gl.STATIC_DRAW);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(obj.indices), gl.STATIC_DRAW);
+
+        //each program has it'c vertex and fragment shaders
+        var positionAttribLocation = gl.getAttribLocation(programs[0], 'vertPosition');
+
+        // vertex locations
+        gl.vertexAttribPointer(
+            positionAttribLocation, //Attr location
+            3, // number of elements per attr
+            gl.FLOAT, // type of elements
+            gl.FALSE,
+            3 * Float32Array.BYTES_PER_ELEMENT, //size of an individual vertex
+            0 // offset from beginning of a single vertex to ths attr
+        );
+        // now it's texture
+        gl.enableVertexAttribArray(positionAttribLocation);
+        gl.drawElements(gl.TRIANGLES, obj.indices.length, gl.UNSIGNED_SHORT, 0);
+
+        //second palm
+        mat4.identity(worldMatrix);
+        mat4.scale(worldMatrix, worldMatrix, [0.02, 0.02, 0.02]);
+        mat4.translate(worldMatrix, worldMatrix, [-3, 0, 0]);
+        gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, worldMatrix);
+
+        gl.drawElements(gl.TRIANGLES, obj.indices.length, gl.UNSIGNED_SHORT, 0);
+        /**
+         * Crate
+         */
+        gl.useProgram(programs[0]);
+        var obj = objects[1];
+        
+        //move object
+        mat4.identity(worldMatrix);
+        mat4.scale(worldMatrix, worldMatrix, [0.5, 0.5, 0.5]);
+        mat4.translate(worldMatrix, worldMatrix, [0, 1, -2]);
+        gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, worldMatrix);
+        vec3.set(vecColor, 1.0, 0.313, 0.117);
+        gl.uniform3fv(vecColorUniform, vecColor);
+        
+
+        var crateBufferObject = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, crateBufferObject);
+        // this sends data to GPU
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(obj.vertices), gl.STATIC_DRAW);
+
+        var createBufferIndices = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, createBufferIndices);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(obj.indices), gl.STATIC_DRAW);
 
         //each program has it'c vertex and fragment shaders
         var positionAttribLocation = gl.getAttribLocation(programs[0], 'vertPosition');
@@ -161,10 +230,126 @@ var App = new function () {
 
         // now it's texture
         gl.enableVertexAttribArray(positionAttribLocation);
+        gl.drawElements(gl.TRIANGLES, obj.indices.length, gl.UNSIGNED_SHORT, 0);
+        
 
-        gl.drawElements(gl.TRIANGLES, box.indices.length, gl.UNSIGNED_SHORT, 0);
+        /**
+         * Island
+         */
+        gl.useProgram(programs[0]);
+        var obj = objects[2];
+        
+        //move object
+        mat4.identity(worldMatrix);
+        mat4.scale(worldMatrix, worldMatrix, [5, 0.4, 3]);
+        mat4.translate(worldMatrix, worldMatrix, [0, -2, 0]);
+        gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, worldMatrix);
+        vec3.set(vecColor, 1.0, 1.0, 0.117);
+        gl.uniform3fv(vecColorUniform, vecColor);
+
+        var islandBufferObject = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, crateBufferObject);
+        // this sends data to GPU
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(obj.vertices), gl.STATIC_DRAW);
+
+        var islandBufferIndices = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, createBufferIndices);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(obj.indices), gl.STATIC_DRAW);
+
+        //each program has it'c vertex and fragment shaders
+        var positionAttribLocation = gl.getAttribLocation(programs[0], 'vertPosition');
+
+        // vertex locations
+        gl.vertexAttribPointer(
+            positionAttribLocation, //Attr location
+            3, // number of elements per attr
+            gl.FLOAT, // type of elements
+            gl.FALSE,
+            3 * Float32Array.BYTES_PER_ELEMENT, //size of an individual vertex
+            0 // offset from beginning of a single vertex to ths attr
+        );
+
+        // now it's texture
+        gl.enableVertexAttribArray(positionAttribLocation);
+        gl.drawElements(gl.TRIANGLES, obj.indices.length, gl.UNSIGNED_SHORT, 0);
+
 
         requestAnimationFrame(drawScene);
+    }
+
+
+    function bindEvents(){
+        canvas.onmousedown = handleMouseDown;
+        document.onmouseup = handleMouseUp;
+        document.onmousemove = handleMouseMove;
+
+        window.addEventListener("keydown", function (event) {
+            if (event.defaultPrevented) {
+              return; // Do nothing if the event was already processed
+            }
+          
+            switch (event.key) {
+                case "s":
+                // code for "s" key press.
+                    eye[1] -= 0.5;
+                break;
+                case "w":
+                // code for "w" key press.
+                    eye[1] += 0.5;
+                break;
+                case "a":
+                // code for "a" key press.
+                    eye[0] -= 0.5;
+                break;
+                case "d":
+                // code for "d" key press.
+                    eye[0] += 0.5;
+                break;
+                case "q": //sink - q
+                    eye[2] -= 0.5;
+                break;
+                case "e": //lift - e
+                    eye[2] += 0.5;
+                break;
+                default:
+                return; // Quit when this doesn't handle the key event.
+            }
+             // Cancel the default action to avoid it being handled twice
+            event.preventDefault();
+          }, true);
+          // the last option dispatches the event to the listener first,
+          // then dispatches event to window
+    }
+
+    function handleMouseDown(event) {
+        mouseDown = true;
+        lastMouseX = event.clientX;
+        lastMouseY = event.clientY;
+    }
+
+
+    function handleMouseUp(event) {
+        mouseDown = false;
+    }
+
+
+    function handleMouseMove(event) {
+        if (!mouseDown) {
+            return;
+        }
+        var newX = event.clientX;
+        var newY = event.clientY;
+
+        var deltaX = newX - lastMouseX
+        var deltaY = newY - lastMouseY;
+        
+        var xDelta = deltaX / 10;
+        var yDelta = deltaY / 10;
+
+        vec3.set(center, center[0] + xDelta, center[1] + yDelta , 0);
+
+        lastMouseX = newX
+        lastMouseY = newY;
     }
 
 }

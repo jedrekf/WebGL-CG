@@ -52,7 +52,7 @@ var Generator = {
             }
         }
 
-        return { vertices: normalData, indices: indexData, normals: normalData }
+        return { vertices: vertexPositionData, indices: indexData, normals: normalData }
     },
 
     getFromModel: function (model) {
@@ -60,6 +60,24 @@ var Generator = {
         var palmTreeIndices = [].concat.apply([], model.meshes[0].faces);
 
         return { vertices: palmTreeVertices, indices: palmTreeIndices };
+    },
+
+    getWater: function(){
+        return {
+            vertices:
+            [
+                -1, 0, 1,
+                1, 0, -1,                
+                1, 0, 1, 
+                -1, 0, -1 
+                
+            ],
+            indices:
+            [
+                0, 1, 2, 
+                0, 2, 3  
+            ]
+        };
     },
 
     getBox: function () {

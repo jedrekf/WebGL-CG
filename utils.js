@@ -27,7 +27,18 @@ function loadImage (url) {
 }
 
 function loadJSONResource (url) {
-    return loadTextResource(url);
+    return new Promise((resolve, reject) => {
+        var request = new XMLHttpRequest();
+        request.open('GET', url + '?ignore-cache=' + Math.random(), true);
+        request.onload = function () {
+            if (request.status < 200 || request.status > 299) {
+                reject('Error: Http Status ' + request.status + ' on resource ' + url);
+            } else {
+                resolve(JSON.parse(request.responseText));
+            }
+        }
+        request.send();
+    });
 }
 
 function createProgram (gl, vertexShader, fragmentShader) {
