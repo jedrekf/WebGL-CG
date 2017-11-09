@@ -137,9 +137,13 @@ var App = function () {
         mat4.invert(viewMatrix, camMatrix);
         mat4.perspective(projMatrix, degToRad(90), aspect, 0.1, 1000.0);
 
+        
         gl.uniformMatrix4fv(matViewUniformLocation, gl.FALSE, viewMatrix);
         gl.uniformMatrix4fv(matProjUniformLocation, gl.FALSE, projMatrix);
-       
+
+        //send current cam position for specular in phong
+        var vectorCameraUniform = gl.getUniformLocation(programs[0], 'cameraDirection');
+        gl.uniform3fv(vectorCameraUniform, new Float32Array(center));
         
         vec3.set(vecColor, 0.376, 0.7, 0.117);
         gl.uniform3fv(vecColorUniform, vecColor);
@@ -438,29 +442,31 @@ var App = function () {
             if (event.defaultPrevented) {
               return; // Do nothing if the event was already processed
             }
-          
+            
+            speed = performance.now() / 20000;
+
             switch (event.key) {
                 case "s":
                 // code for "s" key press.
-                    eye[1] -= 0.5;
+                    eye[1] += speed;
                 break;
                 case "w":
                 // code for "w" key press.
-                    eye[1] += 0.5;
+                    eye[1] -= speed;
                 break;
                 case "a":
                 // code for "a" key press.
-                    eye[0] -= 0.5;
+                    eye[0] += speed;
                 break;
                 case "d":
                 // code for "d" key press.
-                    eye[0] += 0.5;
+                    eye[0] -= speed;
                 break;
                 case "q": //sink - q
-                    eye[2] -= 0.5;
+                    eye[2] -= speed;
                 break;
                 case "e": //lift - e
-                    eye[2] += 0.5;
+                    eye[2] += speed;
                 break;
                 default:
                 return; // Quit when this doesn't handle the key event.

@@ -38,7 +38,7 @@ var Generator = {
         }
 
         var indexData = [];
-        for (var latNumber = 0; latNumber < latitudeBands; latNumber++) {
+        for (var latNumber = 0; latNumber < latitudeBands/3; latNumber++) {
             for (var longNumber = 0; longNumber < longitudeBands; longNumber++) {
                 var first = (latNumber * (longitudeBands + 1)) + longNumber;
                 var second = first + longitudeBands + 1;
