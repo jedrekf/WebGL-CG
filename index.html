@@ -21,7 +21,7 @@ void main(){
 </head>
 
     <body>
-        <canvas id="window" width="800" height="600">
+        <canvas id="window" width="1024" height="768">
             Your browser is not compatible
         </canvas>
         <div>
@@ -29,11 +29,13 @@ void main(){
         </div>
         <script src="./gl-matrix.js"></script>
         <script src="./utils.js"></script>
+        <script src="./gl-utils.js"></script>
         <script src="./generator.js"></script>
-        <script src="./draw.js"></script>
+        <script src="./assimp.js"></script>
         <script src="./app.js"></script> 
         <script>
-            App.Init();
+            var app = new App();
+            app.Init();
         </script>
     </body>
 </html>

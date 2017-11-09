@@ -22,7 +22,7 @@ var Generator = {
 
                 var x = cosPhi * sinTheta;
                 var y = cosTheta;
-                var z = sinPhi * sinTheta;
+                var z = -1 * (sinPhi * sinTheta); // fix for CCW culling like the rest of the objects
                 var u = 1 - (longNumber / longitudeBands);
                 var v = 1 - (latNumber / latitudeBands);
 
@@ -58,8 +58,9 @@ var Generator = {
     getFromModel: function (model) {
         var palmTreeVertices = model.meshes[0].vertices;
         var palmTreeIndices = [].concat.apply([], model.meshes[0].faces);
+        var palmTreeNormals = model.meshes[0].normals;
 
-        return { vertices: palmTreeVertices, indices: palmTreeIndices };
+        return { vertices: palmTreeVertices, indices: palmTreeIndices, normals: palmTreeNormals };
     },
 
     getWater: function(){
@@ -76,6 +77,11 @@ var Generator = {
             [
                 0, 1, 2, 
                 0, 2, 3  
+            ],
+            normals:
+            [
+                0.0, 6.0, 0.0,
+                0.0, 6.0, 0.0,
             ]
         };
     },
@@ -146,6 +152,45 @@ var Generator = {
                 // Bottom
                 21, 20, 22,
                 22, 20, 23
+            ],
+
+            normals:
+            [
+                //top
+                0.0, 1.0, 0.0,
+                0.0, 1.0, 0.0,
+                0.0, 1.0, 0.0,
+                0.0, 1.0, 0.0,
+
+                //left
+                -1.0, 0.0, 0.0,
+                -1.0, 0.0, 0.0,
+                -1.0, 0.0, 0.0,
+                -1.0, 0.0, 0.0,
+
+                //right
+                1.0, 0.0, 0.0,
+                1.0, 0.0, 0.0,
+                1.0, 0.0, 0.0,
+                1.0, 0.0, 0.0,
+
+                //front
+                0.0, 0.0, 1.0,
+                0.0, 0.0, 1.0,
+                0.0, 0.0, 1.0,
+                0.0, 0.0, 1.0,
+                
+                //back
+                0.0, 0.0, -1.0,
+                0.0, 0.0, -1.0,
+                0.0, 0.0, -1.0,
+                0.0, 0.0, -1.0,
+
+                //bottom
+                0.0, -1.0, 0.0,
+                0.0, -1.0, 0.0,
+                0.0, -1.0, 0.0,
+                0.0, -1.0, 0.0,
             ]
         };
     }
