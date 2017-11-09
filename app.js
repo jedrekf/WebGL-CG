@@ -86,6 +86,7 @@ var App = function () {
         objects.push(Generator.getFromModel(model));
         objects.push(Generator.getBox());        
         objects.push(Generator.getIsland());
+        objects.push(Generator.getWater());
         //maybe assign objects to programs in a dictionary
 
         bindEvents();
@@ -231,7 +232,6 @@ var App = function () {
 
         var crateBufferObject = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, crateBufferObject);
-        // this sends data to GPU
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(obj.vertices), gl.STATIC_DRAW);
 
         var createBufferIndices = gl.createBuffer();
@@ -328,6 +328,59 @@ var App = function () {
 
         gl.drawElements(gl.TRIANGLES, obj.indices.length, gl.UNSIGNED_SHORT, 0);
 
+        /**
+         * Water
+         */
+        gl.useProgram(programs[0]);
+        var obj = objects[3];
+        
+        //move object
+        mat4.identity(worldMatrix);
+        mat4.scale(worldMatrix, worldMatrix, [100.0, 1.0, 100.0]);
+        mat4.translate(worldMatrix, worldMatrix, [0, -2, 0]);
+        gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, worldMatrix);
+        vec3.set(vecColor, 0.1, 0.1, 9.0);
+        gl.uniform3fv(vecColorUniform, vecColor);
+
+        var islandBufferObject = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, islandBufferObject);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(obj.vertices), gl.STATIC_DRAW);
+
+        var islandBufferIndices = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, islandBufferIndices);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(obj.indices), gl.STATIC_DRAW);
+
+        var positionAttribLocation = gl.getAttribLocation(programs[0], 'vertPosition');
+
+        // vertex locations
+        gl.vertexAttribPointer(
+            positionAttribLocation, //Attr location
+            3, // number of elements per attr
+            gl.FLOAT, // type of elements
+            gl.FALSE,
+            3 * Float32Array.BYTES_PER_ELEMENT, //size of an individual vertex
+            0 // offset from beginning of a single vertex to ths attr
+        );
+
+        gl.enableVertexAttribArray(positionAttribLocation);
+
+        var islandNormalsBufferObject = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, islandNormalsBufferObject);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(obj.normals), gl.STATIC_DRAW);
+
+        var normalAttribLocation = gl.getAttribLocation(programs[0], 'vertNormal');
+        
+        gl.vertexAttribPointer(
+            normalAttribLocation, //Attr location
+            3, // number of elements per attr
+            gl.FLOAT, // type of elements
+            gl.TRUE,
+            3 * Float32Array.BYTES_PER_ELEMENT, //size of an individual vertex
+            0 // offset from beginning of a single vertex to ths attr
+        );
+        gl.enableVertexAttribArray(normalAttribLocation);
+
+        gl.drawElements(gl.TRIANGLES, obj.indices.length, gl.UNSIGNED_SHORT, 0);
 
         requestAnimationFrame(drawScene);
     }
