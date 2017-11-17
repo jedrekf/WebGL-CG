@@ -49,7 +49,7 @@ function loadObjResource (url) {
             if (request.status < 200 || request.status > 299) {
                 reject('Error: Http Status ' + request.status + ' on resource ' + url);
             } else {
-                Assimp.parse (request.responseText, 'aaa.obj', function(result){
+                Assimp.parse (request.responseText, 'tree.obj', function(result){
                     resolve(JSON.parse(result));
                 });
             }

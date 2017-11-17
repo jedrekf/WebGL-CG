@@ -41,14 +41,14 @@ var GlUtils = function () {
     };
 
     this.createBuffers = function (gl){
-        var palmVertexBufferObject = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, palmVertexBufferObject);
+        var vertexBufferObject = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBufferObject);
 
-        var palmIndexBufferObject = gl.createBuffer();
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, palmIndexBufferObject);
+        var indexBufferObject = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBufferObject);
 
-        var palmNormalsBufferObject = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, palmNormalsBufferObject);
+        var normalsBufferObject = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, normalsBufferObject);
     };
 
     this.drawObject = function(gl, program, obj, vecColor,  worldMatrix, viewMatrix, projMatrix) {
@@ -68,8 +68,6 @@ var GlUtils = function () {
 
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(obj.vertices), gl.STATIC_DRAW);
 
-        // var indexBufferObject = gl.createBuffer();
-        // gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBufferObject);
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(obj.indices), gl.STATIC_DRAW);
 
         //each program has it'c vertex and fragment shaders
