@@ -22,7 +22,7 @@ void main() {
 
     vec3 lightIntensity = ambientLightIntensity + 
         sunlightIntensity * max(dot(surfaceNormal, sunlightDirection), 0.0);
-         //+        specularIntensity * max(dot(vReflection, (-1.0 * cameraDirection)), 0.0);
+         //+ specularIntensity * max(dot(vReflection, (-1.0 * cameraDirection)), 0.0);
 
     gl_FragColor = vec4(u_color.rgb * lightIntensity, u_color.a);
 }

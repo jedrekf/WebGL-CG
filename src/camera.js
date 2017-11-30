@@ -3,7 +3,6 @@ var Camera = function(){
 	this.eye = [0, 0, -1]; // where are we
     this.center = [0, 0, 0]; // point we look at
     this.up = [0, 1, 0]; //vec3 pointing up
-    this.cameraMatrix;
 
 	this.init = function(){
         //prepare camera
@@ -79,20 +78,13 @@ var Camera = function(){
 
         var deltaX = newX - lastMouseX;
         var deltaY = newY - lastMouseY;
-        
-        var xDelta = deltaX / 10;
-        var yDelta = deltaY / 10;
-
-        //vec3.set(eye, eye[0] - xDelta , eye[1] + yDelta, eye[2]);
-        //vec3.set(self.center, self.center[0] + xDelta, self.center[1] + yDelta , 0);
-        //mat4.rotate(self.cameraMatrix, self.cameraMatrix, degToRad(2), [yDelta, xDelta, 0]);
 
         //have to use some trigonometric sin cos here?
-        var c = Math.cos(degToRad(yDelta));
-        var s = Math.sin(degToRad(xDelta));
+        var s = Math.sin(degToRad(deltaY));
+        var c = Math.sin(degToRad(deltaX));
 
         mat4.rotateY(self.cameraMatrix, self.cameraMatrix, c);
-        mat4.rotateX(self.cameraMatrix, self.cameraMatrix, s);
+        //mat4.rotateX(self.cameraMatrix, self.cameraMatrix, s);
         
         lastMouseX = newX;
         lastMouseY = newY;

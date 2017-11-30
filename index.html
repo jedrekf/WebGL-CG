@@ -1,20 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script id="fragmentShader.fs.GLSL" type="x-shader/x-fragment" >
-// file="index.html"
-
-//for now it makes everything red
-precision mediump float;
-
-varying vec2 fragTexCoord;
-uniform sampler2D sampler;
-
-void main(){
-    gl_FragColor = texture2D(sampler, fragTexCoord);
-}
-</script>
-
     <title>WebGL</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -27,13 +13,13 @@ void main(){
         <div>
             <i>Enjoy</i>
         </div>
-        <script src="./libs/assimp.js"></script>
-        <script src="./libs/gl-matrix.js"></script>
-        <script src="./utils.js"></script>
-        <script src="./gl-utils.js"></script>
-        <script src="./generator.js"></script>
-        <script src="./camera.js"></script>
-        <script src="./app.js"></script> 
+        <script src="./src/libs/assimp.js"></script>
+        <script src="./src/libs/gl-matrix.js"></script>
+        <script src="./src/utils.js"></script>
+        <script src="./src/gl-utils.js"></script>
+        <script src="./src/generator.js"></script>
+        <script src="./src/camera.js"></script>
+        <script src="./src/app.js"></script> 
         <script>
             var app = new App();
             app.Init();
