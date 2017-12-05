@@ -8,45 +8,49 @@ var lastMouseY;
 
 var App = function () {
     var programs = [];
-    var img;
+    var textures = {};
+    var objects = [];
+    
     var gl_utils = new GlUtils();
     var camera = new Camera();
 
-    /**
-     * {vertices, indices, normals?}
-     */
-    var objects = [];
+    var defualtLighting = 
+    {
+        direction: [4.0, 4.00, -1.0],
+        color: [0.9, 0.9, 0.9],
+        ambient: [0.4, 0.4, 0.4]
+    };
 
-    //downloads shit
+
     this.Init = function () {
         var shaderPairsCount = 2;
         var modelsCount = 1;
-        var texturesCount = 1;
+        var texturesCount = 2;
 
         var basicshaderText;
         Promise.all([
             loadTextResource('./src/shaders/basic.vs.GLSL'),
             loadTextResource('./src/shaders/basic.fs.GLSL'),
-            loadTextResource('./src/shaders/box.vs.GLSL'),
-            loadTextResource('./src/shaders/box.fs.GLSL'),
+            loadTextResource('./src/shaders/texture.vs.GLSL'),
+            loadTextResource('./src/shaders/texture.fs.GLSL'),
             loadObjResource('./models/palm_tree.obj'),
-            loadImage('./textures/crate_side.svg')
+            loadImage('./textures/crate_side.svg'),
+            loadImage('./textures/diffus.png')
         ]).
         then(function (data) {
             var s = shaderPairsCount * 2;
             var shaders = data.slice(0, s);
             var models = data.slice(s, s + modelsCount);
             s += modelsCount;
-            var textures = data.slice(s, s + texturesCount);
+            var textureImages = data.slice(s, s + texturesCount);
 
-            Run(shaders, models, textures);
+            Run(shaders, models, textureImages);
         }).catch(errors => console.error(errors));
     };
 
 
-    function Run(shaders, models, textures) {
+    function Run(shaders, models, textureImages) {
         gl = gl_utils.getWebGl();
-        img = textures[0];
         model = models[0];
 
         //setting color of paint
@@ -76,12 +80,10 @@ var App = function () {
         var basicProgram = gl_utils.createProgram(gl, basicVertexShader, basicFragmentShader);
         programs.push(basicProgram);
 
-        var boxVertexShader = gl_utils.createShader(gl, gl.VERTEX_SHADER, shaders[2]);
-        var boxFragmentShader = gl_utils.createShader(gl, gl.FRAGMENT_SHADER, shaders[3]);
-        var programBox = gl_utils.createProgram(gl, boxVertexShader, boxFragmentShader);
-        programs.push(programBox);
-
-
+        var textureVertexShader = gl_utils.createShader(gl, gl.VERTEX_SHADER, shaders[2]);
+        var textureFragmentShader = gl_utils.createShader(gl, gl.FRAGMENT_SHADER, shaders[3]);
+        var textureProgram = gl_utils.createProgram(gl, textureVertexShader, textureFragmentShader);
+        programs.push(textureProgram);
 
         /**
          * Objects array holding our scene objects
@@ -92,8 +94,13 @@ var App = function () {
         objects.water = Generator.getWater();
         //maybe assign objects to programs in a dictionary
 
+        /**
+         * Bound textures
+         */
+        textures.box = gl_utils.bindTexture(gl, textureImages[0]);
+        textures.palm = gl_utils.bindTexture(gl, textureImages[1]);
 
-        camera.init();
+        camera.init();  
 
         /**
          * Main loop
@@ -117,12 +124,10 @@ var App = function () {
         gl.useProgram(programs[0]);
 
         /**
-         * Creating Matrices for world, view and projection 
+         * Creating Matrices for view and projection , world matrix is handled by gl-utils draw
          */
-        var matWorldUniformLocation = gl.getUniformLocation(programs[0], 'mWorld');
-        var matViewUniformLocation = gl.getUniformLocation(programs[0], 'mView');
-        var matProjUniformLocation = gl.getUniformLocation(programs[0], 'mProj');
-        var vecColorUniform = gl.getUniformLocation(programs[0], 'vColor');
+        
+        gl_utils.setDefaultUniforms(programs[0], defualtLighting);
 
         var worldMatrix = new Float32Array(16);
         var camMatrix = new Float32Array(16);
@@ -136,49 +141,9 @@ var App = function () {
         mat4.perspective(projMatrix, degToRad(90), aspect, 0.1, 1000.0);
 
 
-        gl.uniformMatrix4fv(matViewUniformLocation, gl.FALSE, viewMatrix);
-        gl.uniformMatrix4fv(matProjUniformLocation, gl.FALSE, projMatrix);
-
-
         //send current cam position for specular in phong
         var vectorCameraUniform = gl.getUniformLocation(programs[0], 'cameraDirection');
         gl.uniform3fv(vectorCameraUniform, new Float32Array(camera.center));
-
-
-        /**
-         * Palms
-         */
-        var palmObj = objects.palmtree;
-
-        vec3.set(vecColor, 0.376, 0.7, 0.117);
-        gl.uniform3fv(vecColorUniform, vecColor);
-
-        mat4.identity(worldMatrix);
-        mat4.scale(worldMatrix, worldMatrix, [0.02, 0.02, 0.02]);
-        mat4.translate(worldMatrix, worldMatrix, [150, -100.0, 0]);
-        vec3.set(vecColor, 0.376, 0.7, 0.117);
-
-        gl_utils.drawObject(gl, programs[0], palmObj, vecColor, worldMatrix, viewMatrix, projMatrix);
-
-
-        //second palm
-        mat4.identity(worldMatrix);
-        mat4.scale(worldMatrix, worldMatrix, [0.02, 0.02, 0.02]);
-        mat4.translate(worldMatrix, worldMatrix, [30, -100.0, 0]);
-
-        gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, worldMatrix);
-
-        gl.drawElements(gl.TRIANGLES, palmObj.indices.length, gl.UNSIGNED_SHORT, 0);
-
-        /**
-         * Crate
-         */
-        mat4.identity(worldMatrix);
-        mat4.scale(worldMatrix, worldMatrix, [0.5, 0.5, 0.5]);
-        mat4.translate(worldMatrix, worldMatrix, [0, 0, 0]);
-        vec3.set(vecColor, 1.0, 0.313, 0.117);
-
-        gl_utils.drawObject(gl, programs[0], objects.box, vecColor, worldMatrix, viewMatrix, projMatrix);
 
 
         /**
@@ -202,7 +167,52 @@ var App = function () {
 
         gl_utils.drawObject(gl, programs[0], objects.water, vecColor, worldMatrix, viewMatrix, projMatrix);
 
+
+        /**
+         * SECOND PROGRAM
+         */
+         /**
+         * Crate
+         */
+        var textureProgram = programs[1];
+        gl.useProgram(textureProgram);
+
+        /**
+         * Creating Matrices for world, view and projection 
+         */
+        var matWorldUniformLocation = gl.getUniformLocation(programs[1], 'mWorld');
+      
+        gl_utils.setDefaultUniforms(programs[1], defualtLighting);
+
+        mat4.identity(worldMatrix);
+        mat4.scale(worldMatrix, worldMatrix, [0.5, 0.5, 0.5]);
+        mat4.translate(worldMatrix, worldMatrix, [0, 0.9, 0]);
+
+        gl_utils.drawObject(gl, textureProgram, objects.box, null, worldMatrix, viewMatrix, projMatrix, textures.box);
+        
+         /**
+         * Palms
+         */
+        var palmObj = objects.palmtree;
+        
+        vec3.set(vecColor, 0.376, 0.7, 0.117);
+
+        mat4.identity(worldMatrix);
+        mat4.scale(worldMatrix, worldMatrix, [0.02, 0.02, 0.02]);
+        mat4.translate(worldMatrix, worldMatrix, [150, -100.0, 0]);
+
+        gl_utils.drawObject(gl, programs[1], palmObj, null, worldMatrix, viewMatrix, projMatrix, textures.palm);
+
+
+        //second palm
+        mat4.identity(worldMatrix);
+        mat4.scale(worldMatrix, worldMatrix, [0.02, 0.02, 0.02]);
+        mat4.translate(worldMatrix, worldMatrix, [30, -100.0, 0]);
+
+        gl.uniformMatrix4fv(matWorldUniformLocation, gl.FALSE, worldMatrix);
+
+        gl.drawElements(gl.TRIANGLES, palmObj.indices.length, gl.UNSIGNED_SHORT, 0);
+        
         requestAnimationFrame(drawScene);
     }
-
 }

@@ -1,8 +1,10 @@
 var Camera = function(){
 	
-	this.eye = [0, 0, -1]; // where are we
+	this.eye = [0, 0, -10]; // where are we
     this.center = [0, 0, 0]; // point we look at
     this.up = [0, 1, 0]; //vec3 pointing up
+    this.rotation = [0, 0, 0];
+
 
 	this.init = function(){
         //prepare camera
@@ -22,7 +24,7 @@ var Camera = function(){
               return; // Do nothing if the event was already processed
             }
             
-            speed = performance.now() / 20000;
+            speed = performance.now() / 80000;
 
             switch (event.key) {
                 case "w":
@@ -61,12 +63,12 @@ var Camera = function(){
         mouseDown = true;
         lastMouseX = event.clientX;
         lastMouseY = event.clientY;
-    };
+    }
 
 
     function handleMouseUp(event) {
         mouseDown = false;
-    };
+    }
 
 
     function handleMouseMove(event, self) {
@@ -79,14 +81,13 @@ var Camera = function(){
         var deltaX = newX - lastMouseX;
         var deltaY = newY - lastMouseY;
 
-        //have to use some trigonometric sin cos here?
-        var s = Math.sin(degToRad(deltaY));
-        var c = Math.sin(degToRad(deltaX));
-
-        mat4.rotateY(self.cameraMatrix, self.cameraMatrix, c);
-        //mat4.rotateX(self.cameraMatrix, self.cameraMatrix, s);
+        var c = Math.sin(degToRad(deltaY/2));
+        var s = Math.sin(degToRad(deltaX/2));
         
+        mat4.rotate(self.cameraMatrix, self.cameraMatrix, c, [1, 0, 0]);
+        mat4.rotate(self.cameraMatrix, self.cameraMatrix, s, [0, 1, 0]);
+
         lastMouseX = newX;
         lastMouseY = newY;
-    };
+    }
 }

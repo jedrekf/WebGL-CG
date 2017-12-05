@@ -59,8 +59,10 @@ var Generator = {
         var palmTreeVertices = model.meshes[0].vertices;
         var palmTreeIndices = [].concat.apply([], model.meshes[0].faces);
         var palmTreeNormals = model.meshes[0].normals;
+        var textureVertexCoords = model.meshes[0].texturecoords[0];
 
-        return { vertices: palmTreeVertices, indices: palmTreeIndices, normals: palmTreeNormals };
+
+        return { vertices: palmTreeVertices, indices: palmTreeIndices, normals: palmTreeNormals, texturecoords: textureVertexCoords };
     },
 
     getWater: function(){
@@ -192,6 +194,37 @@ var Generator = {
                 0.0, -1.0, 0.0,
                 0.0, -1.0, 0.0,
                 0.0, -1.0, 0.0,
+            ],
+            texturecoords: [
+                0,0,
+                0,1,
+                1,1,
+                1,0,
+
+                0,0,
+                1,0,
+                1,1,
+                0,1,
+
+                1,1,
+                0,1,
+                0,0,
+                1,0,
+
+                1,1,
+                1,0,
+                0,0,
+                0,1,
+
+                0,0,
+                0,1,
+                1,1,
+                1,0,
+
+                1,1,
+                1,0,
+                0,0,
+                0,1,
             ]
         };
     }

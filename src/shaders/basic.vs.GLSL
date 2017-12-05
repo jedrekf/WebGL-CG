@@ -11,7 +11,8 @@ uniform mat4 mView;
 uniform mat4 mProj;
 uniform vec3 vColor;
 
-void main(){
+void main()
+{
     fragNormal = (mWorld * vec4(vertNormal, 0.0)).xyz;
     u_color = vec4(vColor, 1.0);
     
