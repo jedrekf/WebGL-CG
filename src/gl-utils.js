@@ -84,13 +84,14 @@ var GlUtils = function () {
 
     }
 
-    this.drawObject = function(gl, program, obj, vecColor,  worldMatrix, viewMatrix, projMatrix, texture) {
+    this.drawObject = function(gl, program, obj, vecColor,  worldMatrix, viewMatrix, projMatrix, texture, move) {
 
         gl.useProgram(program);
 
         var matWorldUniformLocation = gl.getUniformLocation(program, 'mWorld');
         var matViewUniformLocation = gl.getUniformLocation(program, 'mView');
         var matProjUniformLocation = gl.getUniformLocation(program, 'mProj');
+        
         if(!texture){
             var vecColorUniform = gl.getUniformLocation(program, 'vColor');
             gl.uniform3fv(vecColorUniform, vecColor);

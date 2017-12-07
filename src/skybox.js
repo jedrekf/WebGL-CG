@@ -39,7 +39,7 @@ var Skybox = function(images){
         gl.disable(gl.DEPTH_TEST);
     };
 
-    this.render = function(gl, program, viewMatrix, projectionMatrix, cameraMatrix){
+    this.render = function(gl, program, viewMatrix, projectionMatrix, cameraMatrix) {
         gl.useProgram(program);
         gl.disable(gl.DEPTH_TEST);
         gl.disable(gl.CULL_FACE);
@@ -79,8 +79,12 @@ var Skybox = function(images){
         model.render = function() { 
             gl.bindBuffer(gl.ARRAY_BUFFER, this.coordsBuffer);
             gl.vertexAttribPointer(aCoords, 3, gl.FLOAT, false, 0, 0);
+            gl.enableVertexAttribArray(aCoords);
+            
             gl.uniformMatrix4fv(uModelview, false, modelview );
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
+            
+
             gl.drawElements(gl.TRIANGLES, this.count, gl.UNSIGNED_SHORT, 0);
         };
         return model;

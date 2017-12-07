@@ -11,7 +11,8 @@ var App = function () {
     var textures = {};
     var objects = [];
     var skyboxImages = [];
-    var skybox;
+    var skybox = {};
+    var ocean = {};
 
     var gl_utils = new GlUtils();
     var camera = new Camera();
@@ -25,9 +26,9 @@ var App = function () {
 
 
     this.Init = function () {
-        var shaderPairsCount = 3;
+        var shaderPairsCount = 4;
         var modelsCount = 1;
-        var texturesCount = 2;
+        var texturesCount = 3;
 
         var basicshaderText;
         Promise.all([
@@ -37,9 +38,12 @@ var App = function () {
             loadTextResource('./src/shaders/texture.fs.GLSL'),
             loadTextResource('./src/shaders/skybox.vs.GLSL'),
             loadTextResource('./src/shaders/skybox.fs.GLSL'),
+            loadTextResource('./src/shaders/ocean.vs.GLSL'),
+            loadTextResource('./src/shaders/ocean.fs.GLSL'),
             loadObjResource('./models/palm_tree.obj'),
             loadImage('./textures/crate_side.svg'),
-            loadImage('./textures/diffus.png')
+            loadImage('./textures/diffus.png'),
+            loadImage('./textures/water.png')
         ]).
         then(function (data) {
             var s = shaderPairsCount * 2;
@@ -63,8 +67,6 @@ var App = function () {
             }).catch(errors => console.error(errors));
 
         }).catch(errors => console.error(errors));
-
-
     };
 
 
@@ -112,6 +114,11 @@ var App = function () {
         var skyboxProgram = gl_utils.createProgram(gl, skyboxVertexShader, skyboxFragmentShader);
         programs.push(skyboxProgram);
 
+        var oceanVertexShader = gl_utils.createShader(gl, gl.VERTEX_SHADER, shaders[6]);
+        var oceanFragmentShader = gl_utils.createShader(gl, gl.FRAGMENT_SHADER, shaders[7]);
+        var oceanProgram = gl_utils.createProgram(gl, oceanVertexShader, oceanFragmentShader);
+        programs.push(oceanProgram);
+
         /**
          * Objects array holding our scene objects
          */
@@ -126,14 +133,17 @@ var App = function () {
          */
         textures.box = gl_utils.bindTexture(gl, textureImages[0]);
         textures.palm = gl_utils.bindTexture(gl, textureImages[1]);
+        textures.water = gl_utils.bindTexture(gl, textureImages[2]);
 
         camera.init();  
-
         /**
          * SKYBOX
          */
         skybox = new Skybox();
         skybox.createSkybox(gl, programs[2], skyboxImages);
+
+        // ocean = new Ocean();
+        // ocean.createOcean(gl, programs[3], textureImages[2]);
 
         /**
          * Main loop
@@ -141,11 +151,21 @@ var App = function () {
         requestAnimationFrame(drawScene);
     }
 
+    var then = 0;
+
     /**
      * Draws a single frame
      */
-    function drawScene() {
-        var speed = performance.now() / 1000;
+    function drawScene(now) {
+         // Convert the time to seconds
+        now *= 0.001;
+        // Subtract the previous time from the current time
+        var deltaTime = now - then;
+        camera.deltaTime = deltaTime;
+        ocean.deltaTime = deltaTime;
+
+        // Remember the current time for the next frame.
+        then = now;
 
         resizeCanvasToDisplaySize(gl.canvas);
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
@@ -185,6 +205,14 @@ var App = function () {
         skybox.render(gl, programs[2], viewMatrix, projMatrix, camera.cameraMatrix);
 
         /**
+         * Water
+         */
+        // mat4.identity(worldMatrix);
+        // mat4.scale(worldMatrix, worldMatrix, [20, 20, 20]);
+        // mat4.translate(worldMatrix, worldMatrix, [0, 1, 0]);
+        // ocean.render(gl, programs[3], worldMatrix, viewMatrix, projMatrix);
+
+        /**
          * Island
          */
         mat4.identity(worldMatrix);
@@ -193,7 +221,6 @@ var App = function () {
         vec3.set(vecColor, 1.0, 1.0, 0.117);
 
         gl_utils.drawObject(gl, programs[0], objects.island, vecColor, worldMatrix, viewMatrix, projMatrix);
-
         /**
          * Water
          */
@@ -202,7 +229,10 @@ var App = function () {
         mat4.translate(worldMatrix, worldMatrix, [0, -2, 0]);
         vec3.set(vecColor, 0.1, 0.1, 9.0);
 
-        gl_utils.drawObject(gl, programs[0], objects.water, vecColor, worldMatrix, viewMatrix, projMatrix);
+        //gl_utils.drawObject(gl, programs[0], objects.water, vecColor, worldMatrix, viewMatrix, projMatrix);
+
+
+        gl_utils.drawObject(gl, programs[1], objects.water, null, worldMatrix, viewMatrix, projMatrix, textures.water, true);
 
 
         /**

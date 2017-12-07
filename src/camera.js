@@ -4,7 +4,7 @@ var Camera = function(){
     this.center = [0, 0, 0]; // point we look at
     this.up = [0, 1, 0]; //vec3 pointing up
     this.rotation = [0, 0, 0];
-
+    this.deltaTime = 0;
 
 	this.init = function(){
         //prepare camera
@@ -24,7 +24,7 @@ var Camera = function(){
               return; // Do nothing if the event was already processed
             }
             
-            speed = performance.now() / 80000;
+            speed = self.deltaTime * 20;
 
             switch (event.key) {
                 case "w":
