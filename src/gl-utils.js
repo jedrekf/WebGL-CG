@@ -80,6 +80,10 @@ var GlUtils = function () {
         return texture;
     };
 
+    this.bindSkybox = function(gl, images){
+
+    }
+
     this.drawObject = function(gl, program, obj, vecColor,  worldMatrix, viewMatrix, projMatrix, texture) {
 
         gl.useProgram(program);

@@ -10,7 +10,9 @@ var App = function () {
     var programs = [];
     var textures = {};
     var objects = [];
-    
+    var skyboxImages = [];
+    var skybox;
+
     var gl_utils = new GlUtils();
     var camera = new Camera();
 
@@ -23,7 +25,7 @@ var App = function () {
 
 
     this.Init = function () {
-        var shaderPairsCount = 2;
+        var shaderPairsCount = 3;
         var modelsCount = 1;
         var texturesCount = 2;
 
@@ -33,6 +35,8 @@ var App = function () {
             loadTextResource('./src/shaders/basic.fs.GLSL'),
             loadTextResource('./src/shaders/texture.vs.GLSL'),
             loadTextResource('./src/shaders/texture.fs.GLSL'),
+            loadTextResource('./src/shaders/skybox.vs.GLSL'),
+            loadTextResource('./src/shaders/skybox.fs.GLSL'),
             loadObjResource('./models/palm_tree.obj'),
             loadImage('./textures/crate_side.svg'),
             loadImage('./textures/diffus.png')
@@ -44,8 +48,23 @@ var App = function () {
             s += modelsCount;
             var textureImages = data.slice(s, s + texturesCount);
 
-            Run(shaders, models, textureImages);
+             //skybox
+            Promise.all([
+                loadImage('./textures/skybox/xpos.png'),
+                loadImage('./textures/skybox/xneg.png'),
+                loadImage('./textures/skybox/ypos.png'),
+                loadImage('./textures/skybox/yneg.png'),
+                loadImage('./textures/skybox/zpos.png'),
+                loadImage('./textures/skybox/zneg.png'),
+            ]).
+            then(function (data) {
+                skyboxImages = data;
+                Run(shaders, models, textureImages);
+            }).catch(errors => console.error(errors));
+
         }).catch(errors => console.error(errors));
+
+
     };
 
 
@@ -54,7 +73,7 @@ var App = function () {
         model = models[0];
 
         //setting color of paint
-        gl.clearColor(0.529, 0.807, 0.98, 1.0);
+        gl.clearColor(0, 0, 0, 0);
         //perform paint 'from?' depth and color buffers
         //depth buffer holds the z value
         //color buffer holds color info
@@ -65,6 +84,9 @@ var App = function () {
         gl.enable(gl.CULL_FACE);
         gl.frontFace(gl.CCW);
         gl.cullFace(gl.BACK);
+
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
         /**
          * BOX
@@ -85,6 +107,11 @@ var App = function () {
         var textureProgram = gl_utils.createProgram(gl, textureVertexShader, textureFragmentShader);
         programs.push(textureProgram);
 
+        var skyboxVertexShader = gl_utils.createShader(gl, gl.VERTEX_SHADER, shaders[4]);
+        var skyboxFragmentShader = gl_utils.createShader(gl, gl.FRAGMENT_SHADER, shaders[5]);
+        var skyboxProgram = gl_utils.createProgram(gl, skyboxVertexShader, skyboxFragmentShader);
+        programs.push(skyboxProgram);
+
         /**
          * Objects array holding our scene objects
          */
@@ -101,6 +128,12 @@ var App = function () {
         textures.palm = gl_utils.bindTexture(gl, textureImages[1]);
 
         camera.init();  
+
+        /**
+         * SKYBOX
+         */
+        skybox = new Skybox();
+        skybox.createSkybox(gl, programs[2], skyboxImages);
 
         /**
          * Main loop
@@ -147,6 +180,11 @@ var App = function () {
 
 
         /**
+         * SKYBOX
+         */
+        skybox.render(gl, programs[2], viewMatrix, projMatrix, camera.cameraMatrix);
+
+        /**
          * Island
          */
         mat4.identity(worldMatrix);
@@ -155,7 +193,6 @@ var App = function () {
         vec3.set(vecColor, 1.0, 1.0, 0.117);
 
         gl_utils.drawObject(gl, programs[0], objects.island, vecColor, worldMatrix, viewMatrix, projMatrix);
-
 
         /**
          * Water
@@ -193,6 +230,8 @@ var App = function () {
          /**
          * Palms
          */
+        gl.disable(gl.CULL_FACE);
+
         var palmObj = objects.palmtree;
         
         vec3.set(vecColor, 0.376, 0.7, 0.117);
@@ -213,6 +252,8 @@ var App = function () {
 
         gl.drawElements(gl.TRIANGLES, palmObj.indices.length, gl.UNSIGNED_SHORT, 0);
         
+        gl.enable(gl.CULL_FACE);
+
         requestAnimationFrame(drawScene);
     }
 }
